@@ -9,11 +9,19 @@
 int main()
 {
     glfwInit();
+
+    const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(800,800,"cool",NULL,NULL);
+    GLFWwindow* window = glfwCreateWindow(mode->width,mode->height,"cool",glfwGetPrimaryMonitor(),NULL);
     glfwMakeContextCurrent(window);
+
+    float width = mode->width;
+    float height = mode->height;
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     glewExperimental = true;
     glewInit();
@@ -57,15 +65,15 @@ int main()
 
     double lasttime = glfwGetTime();
 
-    float camx = 20, camy = 1, camz = 20;
+    float camx = 0, camy = 1, camz = 0;
     float theta = 0, phi = 0;
-    bool mousecaptured = false;
+    bool mousecaptured = true;
 
     double oldmousex, oldmousey;
 
     float speed = 4;
 
-    float fogred = 1, foggreen = 1, fogblue = 1.0;
+    float fogred = 0.0, foggreen = 0.3, fogblue = 0.9;
     glClearColor(fogred,foggreen,fogblue,1);
 
     while(!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
@@ -105,12 +113,13 @@ int main()
             glfwGetCursorPos(window, &oldmousex, &oldmousey);
         }
 
-        mat4 pers = perspective(90, 1, 0.01, 1000);
+        mat4 pers = perspective(90, height / width, 0.01, 1000);
         mat4 camera = pitch(-theta) * yaw(-phi) * translate(-camx,-camy,-camz);
 
         sqshad.use();
         sqshad.setMat4(pers, "perspective");
         sqshad.setMat4(camera, "camera");
+        sqshad.setVec4(fogred,foggreen,fogblue,1,"fogcolour");
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
