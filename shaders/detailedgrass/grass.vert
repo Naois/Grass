@@ -6,6 +6,9 @@ layout(location = 0) in int vertindex;
 
 out vec3 pos;
 out vec3 worldpos;
+out vec3 normal;
+out vec3 bladecol;
+out float lenfrac; // This is the proportion of the length along the blade. Used to approx AO
 
 uniform mat4 perspective;
 uniform mat4 camera;
@@ -53,7 +56,7 @@ vec3 wind(vec2 loc)
 #define PI 3.14159265
 
 const float spacing = 0.08;
-const float gridsize = 400;
+const float gridsize = 1000;
 
 void main()
 {
@@ -66,6 +69,9 @@ void main()
     float r2 = rand(basepos + 0.5);
     basepos += vec2(r1,r2);
 
+    float colvar = rand(basepos);
+    bladecol = vec3(0.2,0.6,0.2) + 0.05*vec3(colvar,-colvar,0);
+
     vec3 w = wind((basepos)/4.0);
     float phase = rand(basepos + 0.2)*2*PI;
     const float flutterfreq = 10;
@@ -73,19 +79,21 @@ void main()
     
     float d = floor(float(gl_VertexID) / 2.0)/TIERS; // This is the parameter for the distance along the blade
     float width = 1-d;
+    lenfrac = d;
 
     float c = 1 + 2*(w.y*w.y + dot(w.xz,straight))*(smoothstep(-0.5,0.5,dot(w.xz,straight))-0.2) + flutter; //should  depend on wind
     const float l = 1.0;
-    float k = 0; //should depend on wind
     float r = 1.0/c;
     float a = l*abs(c);
     float h = 0.4;
-    vec2 displace = vec2(h*r*(cos(a*d) - 1), h*abs(r)*mix(sin(a*d),d,k));
+    vec2 displace = vec2(h*r*(cos(a*d) - 1), h*abs(r)*sin(a*d));
+    normal = normalize((vec2(cos(a*d),sin(a*d))).xxy * vec3(straight,1)).xzy;
     // displace *= vec2(0,1);
 
     vec3 centrepos = (displace.xxy * vec3(straight, 1)).xzy;
     vec3 finalpos = vec3(basepos,0).xzy + centrepos + (0.05*h*width*(mod(float(gl_VertexID), 2.0)-0.5)* right);
-    finalpos -= 0.01*(mod(float(gl_VertexID), 2.0)-0.5) * dot(straight, normalize(billboard[2].xz)) * billboard[0].xyz;
+    if(gl_VertexID != 12)
+        finalpos -= 0.01*(mod(float(gl_VertexID), 2.0)-0.5) * (2*smoothstep(-1, 1, dot(straight, normalize(billboard[2].xz))) - 1) * billboard[0].xyz;
     gl_Position = vec4(finalpos, 1.0);
     pos = (camera*gl_Position).xyz;
     worldpos = gl_Position.xyz;

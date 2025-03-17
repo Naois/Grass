@@ -32,6 +32,15 @@ public:
         }
         return ret;
     }
+    vec3 normalize()
+    {
+        float mag = sqrt(values[0]*values[0]+values[1]*values[1]+values[2]*values[2]);
+        return vec3(values[0]/mag,values[1]/mag,values[2]/mag);
+    }
+    void print()
+    {
+        printf("%.2f %.2f %.2f\n", values[0],values[1],values[2]);
+    }
 };
 
 class vec4

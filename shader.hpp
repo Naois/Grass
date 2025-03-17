@@ -107,6 +107,16 @@ public:
         glUniform2f(glGetUniformLocation(programID, name), x, y);
     }
 
+    void setVec3(float x, float y, float z, const char* name)
+    {
+        glUniform3f(glGetUniformLocation(programID, name), x, y, z);
+    }
+
+    void setVec3(vec3 v, const char* name)
+    {
+        setVec3(v[0],v[1],v[2], name);
+    }
+
     void setVec4(float x, float y, float z, float w, const char* name)
     {
         glUniform4f(glGetUniformLocation(programID, name), x, y, z, w);

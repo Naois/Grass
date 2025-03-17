@@ -31,9 +31,9 @@ int main()
 
     float squareverts[] = {
          0, 0,  0,
-        40, 0,  0,
-         0, 0, 40,
-        40, 0, 40
+        80, 0,  0,
+         0, 0, 80,
+        80, 0, 80
     };
 
     GLuint vao;
@@ -46,7 +46,7 @@ int main()
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(float),(void*)0);
 
-    shader sqshad("shaders/groundplane.vert", "shaders/basic.frag");
+    shader sqshad("shaders/detailedgrass/groundplane.vert", "shaders/detailedgrass/ground.frag");
 
     int verts[] = {
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
@@ -62,16 +62,18 @@ int main()
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 1, GL_INT, GL_FALSE, sizeof(int), (void*)0);
 
-    shader grassshad("shaders/detailedgrass/grass.vert", "shaders/basic.frag");
+    shader grassshad("shaders/detailedgrass/grass.vert", "shaders/detailedgrass/grass.frag");
 
 
     double lasttime = glfwGetTime();
 
-    float camx = 0, camy = 1, camz = 0;
+    float camx = 50, camy = 1, camz = 50;
+    float targettheta = 0, targetphi = 0;
     float theta = 0, phi = 0;
     bool mousecaptured = true;
 
     double oldmousex, oldmousey;
+    glfwGetCursorPos(window, &oldmousex, &oldmousey);
 
     float speed = 4;
 
@@ -93,11 +95,13 @@ int main()
             glfwGetCursorPos(window, &mousex, &mousey);
         else
             {mousex = oldmousex; mousey = oldmousey;}
-        theta -= 0.01*(mousey - oldmousey);
-        phi += 0.01*(mousex - oldmousex);
-        theta = theta < -M_PI_2? -M_PI_2 : theta;
-        theta = theta > M_PI_2? M_PI_2 : theta;
-        phi = fmod(phi, 2*M_PI);
+        targettheta -= 0.01*(mousey - oldmousey);
+        targetphi += 0.01*(mousex - oldmousex);
+        targettheta = targettheta < -M_PI_2? -M_PI_2 : targettheta;
+        targettheta = targettheta > M_PI_2? M_PI_2 : targettheta;
+        float c = 0.95;
+        theta = c*theta + (1-c)*targettheta;
+        phi = c*phi + (1-c)*targetphi;
         oldmousex = mousex;
         oldmousey = mousey;
 
@@ -120,22 +124,30 @@ int main()
         mat4 pers = perspective(90, height / width, 0.01, 1000);
         mat4 camera = pitch(-theta) * yaw(-phi) * translate(-camx,-camy,-camz);
 
+        vec3 lightdir = vec3(1,1,1).normalize();
+
+
         sqshad.use();
         sqshad.setMat4(pers, "perspective");
         sqshad.setMat4(camera, "camera");
         sqshad.setVec4(fogred,foggreen,fogblue,1,"fogcolour");
+        sqshad.setVec3(lightdir, "lightdir");
+        sqshad.setVec3(camx, camy, camz, "camerapos");
+        
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
         grassshad.use();
         grassshad.setMat4(pers, "perspective");
         grassshad.setMat4(camera, "camera");
-        grassshad.setMat4(yaw(phi) * pitch(theta), "billboard");
+        grassshad.setMat4(yaw(phi), "billboard");
         grassshad.setFloat(time, "time");
         grassshad.setVec4(fogred,foggreen,fogblue,1,"fogcolour");
+        grassshad.setVec3(lightdir, "lightdir");
+        grassshad.setVec3(camx, camy, camz, "camerapos");
 
         glBindVertexArray(grassvao);
-        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 13, 400*400);
+        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 13, 1000*1000);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
