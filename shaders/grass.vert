@@ -1,5 +1,7 @@
 #version 330 core
 
+// This doesn't work. It should work, but for some reason, it's being converted to float by opengl.
+// I'll chase it down some other time when I actually need an int vertex attribute
 layout(location = 0) in int vertindex;
 
 out vec3 pos;

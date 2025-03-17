@@ -14,6 +14,7 @@ int main()
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_SAMPLES, 9);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(mode->width,mode->height,"cool",glfwGetPrimaryMonitor(),NULL);
     glfwMakeContextCurrent(window);
@@ -48,7 +49,7 @@ int main()
     shader sqshad("shaders/groundplane.vert", "shaders/basic.frag");
 
     int verts[] = {
-        0, 1, 2
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
     };
 
     GLuint grassvao;
@@ -61,7 +62,8 @@ int main()
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 1, GL_INT, GL_FALSE, sizeof(int), (void*)0);
 
-    shader grassshad("shaders/grass.vert", "shaders/basic.frag");
+    shader grassshad("shaders/detailedgrass/grass.vert", "shaders/basic.frag");
+
 
     double lasttime = glfwGetTime();
 
@@ -75,6 +77,8 @@ int main()
 
     float fogred = 0.0, foggreen = 0.3, fogblue = 0.9;
     glClearColor(fogred,foggreen,fogblue,1);
+
+    glDisable(GL_CULL_FACE);
 
     while(!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
     {
@@ -131,7 +135,7 @@ int main()
         grassshad.setVec4(fogred,foggreen,fogblue,1,"fogcolour");
 
         glBindVertexArray(grassvao);
-        glDrawArraysInstanced(GL_TRIANGLES, 0, 3, 400*400);
+        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 13, 400*400);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
