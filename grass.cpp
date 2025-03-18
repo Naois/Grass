@@ -14,6 +14,7 @@ int main()
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_SAMPLES, 9);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(mode->width,mode->height,"cool",glfwGetPrimaryMonitor(),NULL);
     glfwMakeContextCurrent(window);
@@ -30,9 +31,9 @@ int main()
 
     float squareverts[] = {
          0, 0,  0,
-        40, 0,  0,
-         0, 0, 40,
-        40, 0, 40
+        80, 0,  0,
+         0, 0, 80,
+        80, 0, 80
     };
 
     GLuint vao;
@@ -45,10 +46,10 @@ int main()
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(float),(void*)0);
 
-    shader sqshad("shaders/groundplane.vert", "shaders/basic.frag");
+    shader sqshad("shaders/detailedgrass/groundplane.vert", "shaders/detailedgrass/ground.frag");
 
     int verts[] = {
-        0, 1, 2
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
     };
 
     GLuint grassvao;
@@ -61,39 +62,72 @@ int main()
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 1, GL_INT, GL_FALSE, sizeof(int), (void*)0);
 
-    shader grassshad("shaders/grass.vert", "shaders/basic.frag");
+    shader grassshad("shaders/detailedgrass/grass.vert", "shaders/detailedgrass/grass.frag");
+
+    float skyverts[] = {
+        -1, -1, 0.999999,
+         1, -1, 0.999999,
+        -1,  1, 0.999999,
+         1,  1, 0.999999
+    };
+
+    GLuint skyvao;
+    glCreateVertexArrays(1, &skyvao);
+    glBindVertexArray(skyvao);
+    GLuint skyvbo;
+    glCreateBuffers(1, &skyvbo);
+    glBindBuffer(GL_ARRAY_BUFFER, skyvbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyverts), skyverts, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*) 0);
+
+    shader skyshad("shaders/sun/sun.vert", "shaders/sun/sun.frag");
 
     double lasttime = glfwGetTime();
 
-    float camx = 0, camy = 1, camz = 0;
+    float camx = 40, camy = 1, camz = 40;
+    float targettheta = 0, targetphi = 0;
     float theta = 0, phi = 0;
     bool mousecaptured = true;
 
     double oldmousex, oldmousey;
+    glfwGetCursorPos(window, &oldmousex, &oldmousey);
 
     float speed = 4;
 
-    float fogred = 0.0, foggreen = 0.3, fogblue = 0.9;
-    glClearColor(fogred,foggreen,fogblue,1);
+    float skyred = 0.0, skygreen = 0.4, skyblue = 1.0;
+
+    glDisable(GL_CULL_FACE);
+
+    bool lastspace = false;
+    bool timepause = false;
+    double time = 0;
+
 
     while(!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        double time = glfwGetTime();
-        double delta = time - lasttime;
-        lasttime = time;
+        double truetime = glfwGetTime();
+        double delta = truetime - lasttime;
+        lasttime = truetime;
+        if(!timepause)
+        {
+            time += delta;
+        }
 
         double mousex, mousey;
         if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
             glfwGetCursorPos(window, &mousex, &mousey);
         else
             {mousex = oldmousex; mousey = oldmousey;}
-        theta -= 0.01*(mousey - oldmousey);
-        phi += 0.01*(mousex - oldmousex);
-        theta = theta < -M_PI_2? -M_PI_2 : theta;
-        theta = theta > M_PI_2? M_PI_2 : theta;
-        phi = fmod(phi, 2*M_PI);
+        targettheta -= 0.01*(mousey - oldmousey);
+        targetphi += 0.01*(mousex - oldmousex);
+        targettheta = targettheta < -M_PI_2? -M_PI_2 : targettheta;
+        targettheta = targettheta > M_PI_2? M_PI_2 : targettheta;
+        float c = 0.95;
+        theta = c*theta + (1-c)*targettheta;
+        phi = c*phi + (1-c)*targetphi;
         oldmousex = mousex;
         oldmousey = mousey;
 
@@ -116,22 +150,49 @@ int main()
         mat4 pers = perspective(90, height / width, 0.01, 1000);
         mat4 camera = pitch(-theta) * yaw(-phi) * translate(-camx,-camy,-camz);
 
+        if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        {
+            if(!lastspace)
+                timepause = !timepause;
+            lastspace = true;
+        }
+        else
+            lastspace = false;
+
+        vec4 light = vec4(1,1,1,1);
+        light = pitch(-time*0.1) * light;
+        vec3 lightdir = light.xyz().normalize();
+
+
         sqshad.use();
         sqshad.setMat4(pers, "perspective");
         sqshad.setMat4(camera, "camera");
-        sqshad.setVec4(fogred,foggreen,fogblue,1,"fogcolour");
+        sqshad.setVec3(lightdir, "lightdir");
+        sqshad.setVec3(camx, camy, camz, "camerapos");
+        
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
         grassshad.use();
         grassshad.setMat4(pers, "perspective");
         grassshad.setMat4(camera, "camera");
-        grassshad.setMat4(yaw(phi) * pitch(theta), "billboard");
+        grassshad.setMat4(yaw(phi), "billboard");
         grassshad.setFloat(time, "time");
-        grassshad.setVec4(fogred,foggreen,fogblue,1,"fogcolour");
+        grassshad.setVec3(lightdir, "lightdir");
+        grassshad.setVec3(camx, camy, camz, "camerapos");
 
         glBindVertexArray(grassvao);
-        glDrawArraysInstanced(GL_TRIANGLES, 0, 3, 400*400);
+        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 13, 1000*1000);
+
+        mat4 screentoworlddir = yaw(phi) * pitch(theta) * screentodir(90, height / width);
+
+        skyshad.use();
+        skyshad.setMat4(screentoworlddir, "screentoworlddir");
+        skyshad.setVec3(lightdir, "lightdir");
+        skyshad.setVec3(skyred, skygreen, skyblue, "skycolour");
+
+        glBindVertexArray(skyvao);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

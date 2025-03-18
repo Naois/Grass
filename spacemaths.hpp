@@ -32,6 +32,15 @@ public:
         }
         return ret;
     }
+    vec3 normalize()
+    {
+        float mag = sqrt(values[0]*values[0]+values[1]*values[1]+values[2]*values[2]);
+        return vec3(values[0]/mag,values[1]/mag,values[2]/mag);
+    }
+    void print()
+    {
+        printf("%.2f %.2f %.2f\n", values[0],values[1],values[2]);
+    }
 };
 
 class vec4
@@ -156,6 +165,16 @@ mat4 perspective(float fov, float ar, float near, float far)
     ret[ivec2{2,2}] = (near + far) / (near - far);
     ret[ivec2{2,3}] = 2*near*far / (near - far);
     ret[ivec2{3,2}] = -1;
+    return ret;
+}
+
+mat4 screentodir(float fov, float ar)
+{
+    mat4 ret;
+    float rads = fov * M_PI / 180.0;
+    ret[ivec2{0,0}] = tan(rads/2);
+    ret[ivec2{1,1}] = ar*tan(rads/2);
+    ret[ivec2{2,2}] = -1;
     return ret;
 }
 
