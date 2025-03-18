@@ -99,13 +99,22 @@ int main()
 
     glDisable(GL_CULL_FACE);
 
+    bool lastspace = false;
+    bool timepause = false;
+    double time = 0;
+
+
     while(!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        double time = glfwGetTime();
-        double delta = time - lasttime;
-        lasttime = time;
+        double truetime = glfwGetTime();
+        double delta = truetime - lasttime;
+        lasttime = truetime;
+        if(!timepause)
+        {
+            time += delta;
+        }
 
         double mousex, mousey;
         if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
@@ -141,8 +150,17 @@ int main()
         mat4 pers = perspective(90, height / width, 0.01, 1000);
         mat4 camera = pitch(-theta) * yaw(-phi) * translate(-camx,-camy,-camz);
 
+        if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        {
+            if(!lastspace)
+                timepause = !timepause;
+            lastspace = true;
+        }
+        else
+            lastspace = false;
+
         vec4 light = vec4(1,1,1,1);
-        light = pitch(time*0.1) * light;
+        light = pitch(-time*0.1) * light;
         vec3 lightdir = light.xyz().normalize();
 
 
@@ -172,6 +190,7 @@ int main()
         skyshad.setMat4(screentoworlddir, "screentoworlddir");
         skyshad.setVec3(lightdir, "lightdir");
         skyshad.setVec3(skyred, skygreen, skyblue, "skycolour");
+
         glBindVertexArray(skyvao);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 

@@ -27,6 +27,7 @@ void main()
 
 
     float kd=0.4*daylight+0.1, ks=0.7*daylight+0.1, ka=0.1 + 0.3*daylight;
+    ks *= daylight;
     float occlusion = 1*lenfrac+0.1;
     colour = vec4((kd*diffuse + ka*ambient + ks*specular) * occlusion, 1);
 }

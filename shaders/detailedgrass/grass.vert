@@ -82,9 +82,8 @@ void main()
     lenfrac = d;
 
     float c = 1 + 2*(w.y*w.y + dot(w.xz,straight))*(smoothstep(-0.5,0.5,dot(w.xz,straight))-0.2) + flutter; //should  depend on wind
-    const float l = 1.0;
     float r = 1.0/c;
-    float a = l*abs(c);
+    float a = abs(c);
     float h = 0.4;
     vec2 displace = vec2(h*r*(cos(a*d) - 1), h*abs(r)*sin(a*d));
     normal = normalize((vec2(cos(a*d),sin(a*d))).xxy * vec3(straight,1)).xzy;
