@@ -65,8 +65,8 @@ void main()
     vec2 straight = vec2(cos(angle), sin(angle));
     vec3 right = vec3(-straight.y, 0, straight.x);
 
-    float r1 = rand(basepos);
-    float r2 = rand(basepos + 0.5);
+    float r1 = rand(basepos)-0.5;
+    float r2 = rand(basepos + 0.5)-0.5;
     basepos += vec2(r1,r2);
 
     float colvar = rand(basepos);

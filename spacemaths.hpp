@@ -168,6 +168,16 @@ mat4 perspective(float fov, float ar, float near, float far)
     return ret;
 }
 
+mat4 screentodir(float fov, float ar)
+{
+    mat4 ret;
+    float rads = fov * M_PI / 180.0;
+    ret[ivec2{0,0}] = tan(rads/2);
+    ret[ivec2{1,1}] = ar*tan(rads/2);
+    ret[ivec2{2,2}] = -1;
+    return ret;
+}
+
 mat4 translate(float x, float y, float z)
 {
     mat4 ret;

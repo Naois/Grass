@@ -64,10 +64,28 @@ int main()
 
     shader grassshad("shaders/detailedgrass/grass.vert", "shaders/detailedgrass/grass.frag");
 
+    float skyverts[] = {
+        -1, -1, 0.999999,
+         1, -1, 0.999999,
+        -1,  1, 0.999999,
+         1,  1, 0.999999
+    };
+
+    GLuint skyvao;
+    glCreateVertexArrays(1, &skyvao);
+    glBindVertexArray(skyvao);
+    GLuint skyvbo;
+    glCreateBuffers(1, &skyvbo);
+    glBindBuffer(GL_ARRAY_BUFFER, skyvbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyverts), skyverts, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*) 0);
+
+    shader skyshad("shaders/sun/sun.vert", "shaders/sun/sun.frag");
 
     double lasttime = glfwGetTime();
 
-    float camx = 50, camy = 1, camz = 50;
+    float camx = 40, camy = 1, camz = 40;
     float targettheta = 0, targetphi = 0;
     float theta = 0, phi = 0;
     bool mousecaptured = true;
@@ -77,8 +95,7 @@ int main()
 
     float speed = 4;
 
-    float fogred = 0.0, foggreen = 0.3, fogblue = 0.9;
-    glClearColor(fogred,foggreen,fogblue,1);
+    float skyred = 0.0, skygreen = 0.4, skyblue = 1.0;
 
     glDisable(GL_CULL_FACE);
 
@@ -124,13 +141,14 @@ int main()
         mat4 pers = perspective(90, height / width, 0.01, 1000);
         mat4 camera = pitch(-theta) * yaw(-phi) * translate(-camx,-camy,-camz);
 
-        vec3 lightdir = vec3(1,1,1).normalize();
+        vec4 light = vec4(1,1,1,1);
+        light = pitch(time*0.1) * light;
+        vec3 lightdir = light.xyz().normalize();
 
 
         sqshad.use();
         sqshad.setMat4(pers, "perspective");
         sqshad.setMat4(camera, "camera");
-        sqshad.setVec4(fogred,foggreen,fogblue,1,"fogcolour");
         sqshad.setVec3(lightdir, "lightdir");
         sqshad.setVec3(camx, camy, camz, "camerapos");
         
@@ -142,12 +160,20 @@ int main()
         grassshad.setMat4(camera, "camera");
         grassshad.setMat4(yaw(phi), "billboard");
         grassshad.setFloat(time, "time");
-        grassshad.setVec4(fogred,foggreen,fogblue,1,"fogcolour");
         grassshad.setVec3(lightdir, "lightdir");
         grassshad.setVec3(camx, camy, camz, "camerapos");
 
         glBindVertexArray(grassvao);
         glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 13, 1000*1000);
+
+        mat4 screentoworlddir = yaw(phi) * pitch(theta) * screentodir(90, height / width);
+
+        skyshad.use();
+        skyshad.setMat4(screentoworlddir, "screentoworlddir");
+        skyshad.setVec3(lightdir, "lightdir");
+        skyshad.setVec3(skyred, skygreen, skyblue, "skycolour");
+        glBindVertexArray(skyvao);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
