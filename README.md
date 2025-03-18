@@ -13,3 +13,5 @@ A wind-like effect is simulated by adjusting the grass curvature using scrolling
 Finally, the grass is rendered using phong shading, with an added occlusion factor to ensure that the parts of the grass closer to the ground look darker. This occlusion factor is computed from the distance along the grass blade.
 
 Implemented using C++ with OpenGL.
+
+This was built for Windows using MSYS2/ucrt.
