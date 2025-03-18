@@ -11,3 +11,5 @@ The grass blade geometry is computed procedurally in the vertex shader without r
 A wind-like effect is simulated by adjusting the grass curvature using scrolling perlin noise. Additionally, to dehomogenise the grass motion, each blade flutters in response to the wind, with a randomised phase, preventing uncanny-looking local synchronisation.
 
 Finally, the grass is rendered using phong shading, with an added occlusion factor to ensure that the parts of the grass closer to the ground look darker. This occlusion factor is computed from the distance along the grass blade.
+
+Implemented using C++ with OpenGL.
